@@ -1,0 +1,12 @@
+# elixir defaults
+/_build/
+/cover/
+/deps/
+/doc/
+/.fetch
+erl_crash.dump
+*.ez
+elixir_help-*.tar
+
+# temporary files for e.g. tests
+/tmp
