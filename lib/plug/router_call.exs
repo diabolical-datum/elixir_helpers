@@ -11,12 +11,12 @@ defmodule MyAppWeb.Plugs.RouterCall do
   def init(opts), do: opts
 
   def call(conn, opts) do
-    router = get_router(conn.host, conn.path_info)
+    router = get_router(conn.method, conn.path_info)
     router.call(conn, opts)
   end
 
-  defp get_router("api." <> _, _path_info), do: FooWeb.Router
-  defp get_router(_host, ["api", "v1" | _]), do: BarV1Web.Router
-  defp get_router(_host, ["api", "v2" | _]), do: BazV2Web.Router
-  defp get_router(_host, _path_info), do: LegacyWeb.Router
+  defp get_router(_method, ["admin" | _]), do: AdminWeb.Router
+  defp get_router(_method, ["api", "v1" | _]), do: ApiV1Web.Router
+  defp get_router(_method, ["api", "v2" | _]), do: ApiV2Web.Router
+  defp get_router(_method, _path_info), do: LegacyWeb.Router
 end
