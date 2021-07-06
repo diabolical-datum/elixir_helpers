@@ -2,6 +2,49 @@ defmodule MyRepo do
   # use Ecto.Repo, otp_app: :my_app, adapter: Ecto.Adapters.Postgres
 
   @doc """
+  Makes conditionally preloading with piping easier.
+
+  For example, instead of writing:
+
+      def update_comment(comment, attrs) do
+        comment
+        |> Comment.changeset(attrs)
+        |> Repo.update()
+        |> case do
+          {:ok, updated_comment} ->
+            {:ok, Repo.preload(updated_comment, :post)}
+
+          {:error, changeset} ->
+            {:error, changeset}
+        end
+      end
+
+  It is possible to do the same with:
+
+      def update_comment(comment, attrs) do
+        comment
+        |> Comment.changeset(attrs)
+        |> Repo.update()
+        |> Repo.maybe_preload(:post)
+      end
+
+  A given_result value of:
+  * `{:ok, structs_or_struct_or_nil}` - calls preload and returns `{:ok, data}`
+  * `:error` - returns `:error` without calling preload
+  * `{:error, term}` returns `{:error, term}` without calling preload
+  """
+  defp maybe_preload(given_result, preload_arg, opts \\ [])
+  defp maybe_preload({:ok, nil}, preload_arg, opts), do: {:ok, nil}
+
+  defp maybe_preload({:ok, structs_or_struct}, preload_arg, opts) do
+    opts = Keyword.merge(default_options(:preload), opts)
+    {:ok, preload(structs_or_struct, preload_arg, opts)}
+  end
+
+  defp maybe_preload({:error, _term} = given_result, _preload_arg, _opts), do: given_result
+  defp maybe_preload(:error, _preload_arg, _opts), do: :error
+
+  @doc """
   Compare to Ecto.Repo.Preloader.maybe_pmap/3
   https://github.com/elixir-ecto/ecto/blob/master/lib/ecto/repo/preloader.ex
   """
