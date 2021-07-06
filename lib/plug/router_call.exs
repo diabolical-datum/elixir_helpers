@@ -16,5 +16,7 @@ defmodule MyAppWeb.Plugs.RouterCall do
   end
 
   defp get_router("api." <> _, _path_info), do: FooWeb.Router
-  defp get_router(_host, ["public", "api" | _]), do: BarWeb.Router
+  defp get_router(_host, ["api", "v1" | _]), do: BarV1Web.Router
+  defp get_router(_host, ["api", "v2" | _]), do: BazV2Web.Router
+  defp get_router(_host, _path_info), do: LegacyWeb.Router
 end
