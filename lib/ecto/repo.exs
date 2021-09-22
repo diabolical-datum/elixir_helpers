@@ -62,4 +62,34 @@ defmodule MyRepo do
       Enum.map(queryables_kw, fn {f, q} -> apply(__MODULE__, f, [q, opts]) end)
     end
   end
+
+  @doc """
+  Randomizes queries that don't use distinct or combinations (eg. union, except, intersect).
+  Preloads sent to the database as a separate query (not loaded through joins) will be randomized.
+
+  This is helpful in testing when it can be difficult to reproduce tests failures that are a
+  result of the database occasionally returning results in a different order than inserted.
+  """
+  def prepare_query(operation, query, opts)
+
+  # OPTION 1 - MUST have `require Ecto.Query` in the file
+  def prepare_query(:all, %{combinations: [], distinct: nil} = query, opts) do
+    {Ecto.Query.order_by(query, fragment("random()")), opts}
+  end
+
+  # OPTION 2 - avoids using `require Ecto.Query`
+  def prepare_query(:all, %{combinations: [], distinct: nil} = query, opts) do
+    order_by_random =
+      %Ecto.Query.QueryExpr{
+        expr: [asc: {:fragment, [], [raw: "random()"]}],
+        file: __ENV__.file,
+        line: __ENV__.line,
+        params: []
+      }
+
+    {update_in(query.order_bys, &(&1 ++ [order_by_random])), opts}
+  end
+
+  # catch-all necessary for both options
+  def prepare_query(_operation, query, opts), do: {query, opts}
 end
