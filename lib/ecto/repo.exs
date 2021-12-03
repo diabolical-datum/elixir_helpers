@@ -92,4 +92,33 @@ defmodule MyRepo do
 
   # catch-all necessary for both options
   def prepare_query(_operation, query, opts), do: {query, opts}
+
+  @doc """
+  Like transaction/2 but does a rollback unless `:ok` or `{:ok, _}` is returned from the given function.
+  """
+  def transaction_safe(fun, opts \\ [])
+
+  def transaction_safe(fun, opts) when is_function(fun, 0) do
+    fn ->
+      case fun.() do
+        :ok -> :ok
+        {:ok, _} = result -> result
+        result -> rollback(result)
+      end
+    end
+    |> transaction(opts)
+    |> elem(1)
+  end
+
+  def transaction_safe(fun, opts) when is_function(fun, 1) do
+    fn ->
+      case fun.(__MODULE__) do
+        :ok -> :ok
+        {:ok, _} = result -> result
+        result -> rollback(result)
+      end
+    end
+    |> transaction(opts)
+    |> elem(1)
+  end
 end
